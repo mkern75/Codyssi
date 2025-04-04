@@ -1,0 +1,5 @@
+.gitattributes
+.DS_STORE
+/.idea
+/SummerAtTheLab2024/data
+/JourneyToAtlantis2025/data
