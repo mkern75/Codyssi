@@ -4,7 +4,6 @@ import re
 
 time_start = time()
 INPUT_FILE = "./JourneyToAtlantis2025/data/q17.txt"
-data = [line.rstrip('\n') for line in open(INPUT_FILE, "r")]
 blocks = [block.splitlines() for block in open(INPUT_FILE, "r").read().split("\n\n")]
 
 # read staircases, build set of states and map of directed, single steps
