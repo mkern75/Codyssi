@@ -12,11 +12,12 @@ def idx(x, y, z, a):
     return x * DIM_Y * DIM_Z * DIM_A + y * DIM_Z * DIM_A + z * DIM_A + a + 1
 
 
-def idxr(v):
-    x, v = divmod(v, DIM_Y * DIM_Z * DIM_A)
-    y, v = divmod(v, DIM_Z * DIM_A)
-    z, v = divmod(v, DIM_A)
-    a = v - 1
+
+def idxr(pos):
+    x, pos = divmod(pos, DIM_Y * DIM_Z * DIM_A)
+    y, pos = divmod(pos, DIM_Z * DIM_A)
+    z, pos = divmod(pos, DIM_A)
+    a = pos - 1
     return x, y, z, a
 
 
@@ -59,10 +60,10 @@ def move_debris(dx, dy, dz, da):
 
 def calc_moves(safe: list[bool]) -> list[bool]:
     safe_new = safe[:]
-    for val, ok in enumerate(safe):
+    for pos, ok in enumerate(safe):
         if not ok:
             continue
-        x, y, z, a = idxr(val)
+        x, y, z, a = idxr(pos)
         if x > 0:
             safe_new[idx(x - 1, y, z, a)] = True
         if x < DIM_X - 1:
@@ -86,8 +87,8 @@ safe[start] = True
 t = 0
 while not safe[target]:
     t += 1
-    move_debris(dx, dy, dz, da)
     safe = calc_moves(safe)
+    move_debris(dx, dy, dz, da)
     for i in range(n_debris):
         safe[idx(dx[i], dy[i], dz[i], da[i])] = False
     safe[start] = True
@@ -98,21 +99,27 @@ print(f"part 2: {ans2}  ({time() - time_start:.3f}s)")
 def calc_moves2(safe: list[int]) -> list[int]:
     safe_new = safe[:]
     for val, hits in enumerate(safe):
-        if hits == 4:
+        if hits >= 4:
             continue
         x, y, z, a = idxr(val)
         if x > 0:
-            safe_new[idx(x - 1, y, z, a)] = min(safe_new[idx(x - 1, y, z, a)], hits)
+            pos = idx(x - 1, y, z, a)
+            safe_new[pos] = min(safe_new[pos], hits)
         if x < DIM_X - 1:
-            safe_new[idx(x + 1, y, z, a)] = min(safe_new[idx(x + 1, y, z, a)], hits)
+            pos = idx(x + 1, y, z, a)
+            safe_new[pos] = min(safe_new[pos], hits)
         if y > 0:
-            safe_new[idx(x, y - 1, z, a)] = min(safe_new[idx(x, y - 1, z, a)], hits)
+            pos = idx(x, y - 1, z, a)
+            safe_new[pos] = min(safe_new[pos], hits)
         if y < DIM_Y - 1:
-            safe_new[idx(x, y + 1, z, a)] = min(safe_new[idx(x, y + 1, z, a)], hits)
+            pos = idx(x, y + 1, z, a)
+            safe_new[pos] = min(safe_new[pos], hits)
         if z > 0:
-            safe_new[idx(x, y, z - 1, a)] = min(safe_new[idx(x, y, z - 1, a)], hits)
+            pos = idx(x, y, z - 1, a)
+            safe_new[pos] = min(safe_new[pos], hits)
         if z < DIM_Z - 1:
-            safe_new[idx(x, y, z + 1, a)] = min(safe_new[idx(x, y, z + 1, a)], hits)
+            pos = idx(x, y, z + 1, a)
+            safe_new[pos] = min(safe_new[pos], hits)
     return safe_new
 
 
@@ -120,13 +127,12 @@ dx, dy, dz, da = dxi[:], dyi[:], dzi[:], dai[:]
 safe = [4] * MX
 safe[start] = 0
 t = 0
-while safe[target] == 4:
+while safe[target] >= 4:
     t += 1
     safe = calc_moves2(safe)
     move_debris(dx, dy, dz, da)
     for i in range(n_debris):
-        pos = idx(dx[i], dy[i], dz[i], da[i])
-        safe[pos] = min(safe[pos] + 1, 4)
+        safe[idx(dx[i], dy[i], dz[i], da[i])] += 1
     safe[start] = 0
 ans3 = t
 print(f"part 3: {ans3}  ({time() - time_start:.3f}s)")
