@@ -12,7 +12,6 @@ def idx(x, y, z, a):
     return x * DIM_Y * DIM_Z * DIM_A + y * DIM_Z * DIM_A + z * DIM_A + a + 1
 
 
-
 def idxr(pos):
     x, pos = divmod(pos, DIM_Y * DIM_Z * DIM_A)
     y, pos = divmod(pos, DIM_Z * DIM_A)
@@ -32,19 +31,17 @@ for line in data:
 
 dxi, dyi, dzi, dai, dvx, dvy, dvz, dva = [], [], [], [], [], [], [], []
 for fx, fy, fz, fa, d, r, vx, vy, vz, va in rules:
-    for a in range(-1, -1 + DIM_A):
-        for x in range(0, DIM_X):
-            for y in range(0, DIM_Y):
-                for z in range(0, DIM_Z):
-                    if (fx * x + fy * y + fz * z + fa * a) % d == r:
-                        dxi.append(x)
-                        dyi.append(y)
-                        dzi.append(z)
-                        dai.append(a)
-                        dvx.append(vx)
-                        dvy.append(vy)
-                        dvz.append(vz)
-                        dva.append(va)
+    for pos in range(MX):
+        x, y, z, a = idxr(pos)
+        if (fx * x + fy * y + fz * z + fa * a) % d == r:
+            dxi.append(x)
+            dyi.append(y)
+            dzi.append(z)
+            dai.append(a)
+            dvx.append(vx)
+            dvy.append(vy)
+            dvz.append(vz)
+            dva.append(va)
 n_debris = len(dxi)
 ans1 = n_debris
 print(f"part 1: {ans1}  ({time() - time_start:.3f}s)")
