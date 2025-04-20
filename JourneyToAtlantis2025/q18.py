@@ -6,6 +6,7 @@ data = [line.rstrip('\n') for line in open(INPUT_FILE, "r")]
 
 DIM_X, DIM_Y, DIM_Z, DIM_A = 10, 15, 60, 3
 MX = DIM_X * DIM_Y * DIM_Z * DIM_A
+MAX_SAFE_HITS = 3
 
 
 def idx(x, y, z, a):
@@ -20,39 +21,36 @@ def idxr(pos):
     return x, y, z, a
 
 
-rules = []
+debris_initial = []
+dvx, dvy, dvz, dva = [], [], [], []
 for line in data:
     s = line.split()
     t = s[2].split("+")
     fx, fy, fz, fa = int(t[0][:-1]), int(t[1][:-1]), int(t[2][:-1]), int(t[3][:-1])
     d, r = int(s[4]), int(s[7])
     vx, vy, vz, va = int(s[11][1:-1]), int(s[12][0:-1]), int(s[13][0:-1]), int(s[14][0:-1])
-    rules += [(fx, fy, fz, fa, d, r, vx, vy, vz, va)]
-
-dxi, dyi, dzi, dai, dvx, dvy, dvz, dva = [], [], [], [], [], [], [], []
-for fx, fy, fz, fa, d, r, vx, vy, vz, va in rules:
     for pos in range(MX):
         x, y, z, a = idxr(pos)
         if (fx * x + fy * y + fz * z + fa * a) % d == r:
-            dxi.append(x)
-            dyi.append(y)
-            dzi.append(z)
-            dai.append(a)
+            debris_initial.append(idx(x, y, z, a))
             dvx.append(vx)
             dvy.append(vy)
             dvz.append(vz)
             dva.append(va)
-n_debris = len(dxi)
-ans1 = n_debris
+
+ans1 = len(debris_initial)
 print(f"part 1: {ans1}  ({time() - time_start:.3f}s)")
 
 
-def move_debris(dx, dy, dz, da):
-    for i in range(n_debris):
-        dx[i] = (dx[i] + dvx[i]) % DIM_X
-        dy[i] = (dy[i] + dvy[i]) % DIM_Y
-        dz[i] = (dz[i] + dvz[i]) % DIM_Z
-        da[i] = (da[i] + dva[i] + 1) % DIM_A - 1
+def move_debris(debris):
+    for i, pos in enumerate(debris):
+        x, y, z, a = idxr(pos)
+        x = (x + dvx[i]) % DIM_X
+        y = (y + dvy[i]) % DIM_Y
+        z = (z + dvz[i]) % DIM_Z
+        a = (a + dva[i] + 1) % DIM_A - 1
+        debris[i] = idx(x, y, z, a)
+    return debris
 
 
 def calc_moves(safe: list[bool]) -> list[bool]:
@@ -78,58 +76,58 @@ def calc_moves(safe: list[bool]) -> list[bool]:
 
 start = idx(0, 0, 0, 0)
 target = idx(DIM_X - 1, DIM_Y - 1, DIM_Z - 1, 0)
-dx, dy, dz, da = dxi[:], dyi[:], dzi[:], dai[:]
+debris = debris_initial[:]
 safe = [False] * MX
 safe[start] = True
 t = 0
 while not safe[target]:
     t += 1
     safe = calc_moves(safe)
-    move_debris(dx, dy, dz, da)
-    for i in range(n_debris):
-        safe[idx(dx[i], dy[i], dz[i], da[i])] = False
+    debris = move_debris(debris)
+    for pos in debris:
+        safe[pos] = False
     safe[start] = True
 ans2 = t
 print(f"part 2: {ans2}  ({time() - time_start:.3f}s)")
 
 
-def calc_moves2(safe: list[int]) -> list[int]:
-    safe_new = safe[:]
-    for val, hits in enumerate(safe):
-        if hits >= 4:
+def calc_moves2(hits: list[int]) -> list[int]:
+    hits_new = hits[:]
+    for pos, hit_count in enumerate(hits):
+        if hit_count > MAX_SAFE_HITS:
             continue
-        x, y, z, a = idxr(val)
+        x, y, z, a = idxr(pos)
         if x > 0:
             pos = idx(x - 1, y, z, a)
-            safe_new[pos] = min(safe_new[pos], hits)
+            hits_new[pos] = min(hits_new[pos], hit_count)
         if x < DIM_X - 1:
             pos = idx(x + 1, y, z, a)
-            safe_new[pos] = min(safe_new[pos], hits)
+            hits_new[pos] = min(hits_new[pos], hit_count)
         if y > 0:
             pos = idx(x, y - 1, z, a)
-            safe_new[pos] = min(safe_new[pos], hits)
+            hits_new[pos] = min(hits_new[pos], hit_count)
         if y < DIM_Y - 1:
             pos = idx(x, y + 1, z, a)
-            safe_new[pos] = min(safe_new[pos], hits)
+            hits_new[pos] = min(hits_new[pos], hit_count)
         if z > 0:
             pos = idx(x, y, z - 1, a)
-            safe_new[pos] = min(safe_new[pos], hits)
+            hits_new[pos] = min(hits_new[pos], hit_count)
         if z < DIM_Z - 1:
             pos = idx(x, y, z + 1, a)
-            safe_new[pos] = min(safe_new[pos], hits)
-    return safe_new
+            hits_new[pos] = min(hits_new[pos], hit_count)
+    return hits_new
 
 
-dx, dy, dz, da = dxi[:], dyi[:], dzi[:], dai[:]
-safe = [4] * MX
-safe[start] = 0
+debris = debris_initial[:]
+hits = [MAX_SAFE_HITS + 1] * MX
+hits[start] = 0
 t = 0
-while safe[target] >= 4:
+while hits[target] > MAX_SAFE_HITS:
     t += 1
-    safe = calc_moves2(safe)
-    move_debris(dx, dy, dz, da)
-    for i in range(n_debris):
-        safe[idx(dx[i], dy[i], dz[i], da[i])] += 1
-    safe[start] = 0
+    hits = calc_moves2(hits)
+    debris = move_debris(debris)
+    for pos in debris:
+        hits[pos] += 1
+    hits[start] = 0
 ans3 = t
 print(f"part 3: {ans3}  ({time() - time_start:.3f}s)")
