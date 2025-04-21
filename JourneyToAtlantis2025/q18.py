@@ -6,11 +6,11 @@ INPUT_FILE = "./JourneyToAtlantis2025/data/q18.txt"
 data = [line.rstrip('\n') for line in open(INPUT_FILE, "r")]
 
 DIM_X, DIM_Y, DIM_Z, DIM_A = 10, 15, 60, 3
+DIM_XYZA = DIM_X * DIM_Y * DIM_Z * DIM_A
 DIM_YZA = DIM_Y * DIM_Z * DIM_A
 DIM_ZA = DIM_Z * DIM_A
-MX = DIM_X * DIM_Y * DIM_Z * DIM_A
-MAX_SAFE_HITS = 3
 DEBRIS_CYCLE = lcm(DIM_X, DIM_Y, DIM_Z, DIM_A)  # cycle is rather small
+MAX_SAFE_HITS = 3
 
 
 def idx(x, y, z, a):
@@ -25,14 +25,14 @@ def idxr(pos):
     return x, y, z, a
 
 
-debris = [[0] * MX for _ in range(DEBRIS_CYCLE)]
+debris = [[0] * DIM_XYZA for _ in range(DEBRIS_CYCLE)]
 for line in data:
     s = line.split()
     ss = s[2].split("+")
     fx, fy, fz, fa = int(ss[0][:-1]), int(ss[1][:-1]), int(ss[2][:-1]), int(ss[3][:-1])
     d, r = int(s[4]), int(s[7])
     vx, vy, vz, va = int(s[11][1:-1]), int(s[12][0:-1]), int(s[13][0:-1]), int(s[14][0:-1])
-    for pos in range(MX):
+    for pos in range(DIM_XYZA):
         x, y, z, a = idxr(pos)
         if (fx * x + fy * y + fz * z + fa * a) % d == r:
             debris[0][idx(x, y, z, a)] += 1
@@ -48,7 +48,7 @@ print(f"part 1: {ans1}  ({time() - time_start:.3f}s)")
 
 start = idx(0, 0, 0, 0)
 target = idx(DIM_X - 1, DIM_Y - 1, DIM_Z - 1, 0)
-safe = [False] * MX
+safe = [False] * DIM_XYZA
 safe[start] = True
 t = 0
 while not safe[target]:
@@ -81,7 +81,7 @@ while not safe[target]:
 ans2 = t
 print(f"part 2: {ans2}  ({time() - time_start:.3f}s)")
 
-hits = [MAX_SAFE_HITS + 1] * MX
+hits = [MAX_SAFE_HITS + 1] * DIM_XYZA
 hits[start] = 0
 t = 0
 while hits[target] > MAX_SAFE_HITS:
